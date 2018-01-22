@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <wiringPi.h>
+using namespace std;
+
+int main()
+{
+	wiringPiSetup();
+	pinMode(1,PWM_OUTPUT);
+	pwmSetMode(PWM_MODE_MS);
+	pwmSetRange(1024);
+	pwmSetClock(16);
+
+	pwmWrite(1,0.5);
+	delay(500);
+
+	pinMode(2,OUTPUT);
+	digitalWrite(2,HIGH);
+	delay(500);
+	digitalWrite(2,LOW);
+	delay(500);
+
+	printf(test finished!);
+	}

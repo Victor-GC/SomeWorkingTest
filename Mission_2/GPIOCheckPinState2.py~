@@ -1,0 +1,19 @@
+try:
+	import RPi.GPIO as GPIO
+	import time
+except RuntimeError:
+		print('import some package error!')
+
+GPIO_PIN=24
+count=5
+
+print('waiting 5 times...')
+
+while count>0:
+		GPIO.wait_for_edge(GPIO_PIN,GPIO.RISING)
+		count=count-1
+		print('input high')
+
+
+print('exit...')
+GPIO.cleanup()

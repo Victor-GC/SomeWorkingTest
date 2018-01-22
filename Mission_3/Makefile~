@@ -1,0 +1,35 @@
+#Makefile for UARTtest  
+#  
+
+program := UARTtest  
+
+	sources := $(wildcard *.cc)  
+headers := $(wildcard *.h)  
+
+	objects := $(sources:.cc=.o)  
+deps    := $(sources:.cc=.d)  
+
+	CC      := g++  
+	CXXFLAGS := -g -Wall -std=c++11  
+	LDINCLUDES := 
+	LDLIB   := -lwiringPi 
+
+	RM      := rm -f  
+
+all:    $(program)  
+
+	$(program):  $(objects)  
+				   $(CC) $(CXXFLAGS) -o $@ $(objects) $(LDLIB) $(LDINCLUDES)
+
+							.PHONY: clean
+							clean:  
+	$(RM) $(objects)  
+	$(RM) $(deps)  
+$(RM) $(program)  
+
+	.SUFFIXES: .d  
+	.cc.d:  
+$(CC) $(CXXFLAGS) -MM -MF $@ $< $(LDLIB) $(LDINCLUDES)
+
+-include $(deps)  
+

@@ -1,0 +1,21 @@
+class LinuxSerialPort
+{
+	public:
+		LinuxSerialPort();
+		~LinuxSerialPort();
+
+		bool openPort();//打开串口并设置了串口配置
+		bool closePort();//关闭串口
+		int writeData(char* data_buffer,int data_size);//串口写入数据
+		int readData(char* data_buffer,int data_size);//串口读取数据
+		bool readConfigData(char* cfg_filename,int filename_size);//读取串口信息，读取文件为cfg格式
+	private:
+		bool configPort();//配置串口信息
+
+		int serialport_fd;//串口的唯一文件标志符
+		int nBits,//串口数据位
+			nSpeed,//串口波特率
+			nStop;//串口停止位
+		char nEvent;//串口奇偶校验位			
+		char portName[256];//串口名称
+};
