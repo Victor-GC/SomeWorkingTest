@@ -22,12 +22,12 @@ module_param(scull_qset, int, S_IRUGO);
 /*设备打开操作*/
 int scull_open(struct inode *inode, struct file *filp)
 {
-	struct scull_dev *dev;//设备信息指针
+	struct scull_dev *dev;/*设备信息指针*/
 
 	dev = container_of(inode->i_cdev,struct scull_dev, cdev);
-	filp->private_data = dev;//将获得设备信息指针保存起来
+	filp->private_data = dev;/*将获得设备信息指针保存起来*/
 
-	if((filp->f_flags & O_ACCMODE) == O_WRONLY)//如果打开模式是只写入模式，则将dev清空为0
+	if((filp->f_flags & O_ACCMODE) == O_WRONLY)/*如果打开模式是只写入模式，则将dev清空为0*/
 	{
 		scull_trim(dev);
 	}
@@ -93,23 +93,23 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count, loff_t *f_
 	{
 		goto out;
 	}
-	if(f_pos + count > dev->size)//读取位置加读取数据量超过已有数据的大小，则只读取已有数据中剩余大小的数据
+	if(f_pos + count > dev->size)/*读取位置加读取数据量超过已有数据的大小，则只读取已有数据中剩余大小的数据*/
 	{
 		count = dev->size - *f_pos;
 	}
 	
 	/*在量子集中寻找链表项，qset索引以及偏移量*/
-	item = (long)*f_pos / itemsize;//第几个scull_qset开始
-	rest = (long)*f_pos % itemsize;//开始scull_qset的哪个位置开始读取
-	s_pos = rest / quantum;//开始scull_qset中的第几个量子开始
-	q_pos = rest % quantum;//开始量子中哪个位置开始读取
+	item = (long)*f_pos / itemsize;/*第几个scull_qset开始*/
+	rest = (long)*f_pos % itemsize;/*开始scull_qset的哪个位置开始读取*/
+	s_pos = rest / quantum;/*开始scull_qset中的第几个量子开始*/
+	q_pos = rest % quantum;/*开始量子中哪个位置开始读取*/
 
 	/*沿该链表前行，直到正确的读取位置*/
 	dptr = scull_follow(dev, item);//获得应该开始的scull_qset的指针
 
 	if(dptr == NULL || !dptr->data || !dptr->data[s_pos])//如果选定scull_qset为空，或者其指向内容为空，或者应该开始的量子内容为空
 	{
-		goto out;
+        goto out;
 	}
 	
 	/*读取该量子的数据，一直到结尾*/
