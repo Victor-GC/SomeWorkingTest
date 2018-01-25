@@ -36,6 +36,8 @@ int main()
         start = 0;
         end = 0;
         printf("请输入要查询的区间，格式：start,end\n");
+        scanf("%*[^\n]");
+        scanf("%*c");
         if (!scanf("%d,%d",&start,&end)){
             printf("输入非法！\n");
             continue;
@@ -48,18 +50,19 @@ int main()
         }
 
         int min = BubbleSort(arrays,start,end);
-        printf("区间[%d,%d]内的最小值为：%d\n",start,end,min);
+        printf("区间[%d,%d]内的最小值为：%d\n",start + 1,end + 1,min);
         
         printf("是否继续？y/n\n");
         char index = 'n';
-        scanf("%c",&index);
+        scanf("%*[^\n]");
+        scanf("%*c");
+        scanf("%c",&index); 
         if (index == 'n'){
             break;
         }
 
         printf("\n");
     }
-
 
     free(arrays);
 }
