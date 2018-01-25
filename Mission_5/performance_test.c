@@ -7,6 +7,7 @@
 
 #include<stdio.h>
 #include<time.h>
+#include<stdlib.h>
 
 int BubbleSort(int* arrays, int start, int end);
 
@@ -15,12 +16,15 @@ int main()
     int n;
     scanf("%d",&n);
 
-    int *arrays = new int[n];
+    int *arrays = (int*)malloc(sizeof(int) * n);
     for (int i = 0;i < n;++i){
         scanf("%d",arrays + i);
     }
-    
-    
+    for (int i=0;i < n;++i){
+        printf("%d ",arrays[i]);
+    }
+    printf("\n");
+
     /*srand((int)time(0));
     for(int i=0;i<n;++i){
         arrays[i]=rand();
@@ -29,20 +33,35 @@ int main()
     int start = 0;
     int end = 0;
     while (1){
-        printf("请输入要查询的区间，格式：[start,end]\n");
-        scanf("[%d,%d]",&start,&end);
+        start = 0;
+        end = 0;
+        printf("请输入要查询的区间，格式：start,end\n");
+        if (!scanf("%d,%d",&start,&end)){
+            printf("输入非法！\n");
+            continue;
+        }
+        start -= 1;
+        end -= 1;
+        if (start < 0 || end < 0|| start >= n || end >=n){
+           printf("输入查询范围有误，请重新输入！\n\n");
+            continue;
+        }
+
         int min = BubbleSort(arrays,start,end);
-        printf("最小值为：%d\n",min);
+        printf("区间[%d,%d]内的最小值为：%d\n",start,end,min);
+        
         printf("是否继续？y/n\n");
         char index = 'n';
         scanf("%c",&index);
         if (index == 'n'){
             break;
         }
+
+        printf("\n");
     }
 
 
-    delete arrays;
+    free(arrays);
 }
 
 int BubbleSort(int* arrays, int start, int end)
@@ -61,5 +80,5 @@ int BubbleSort(int* arrays, int start, int end)
             }
         }
     }
-    return arrays[i];
+    return arrays[start];
 }
