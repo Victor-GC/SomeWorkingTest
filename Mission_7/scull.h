@@ -38,7 +38,7 @@ struct scull_dev {
 	unsigned int access_key;/*由sculluid，scullpriv使用*/
 	struct semaphore sem;/*互斥信号量*/
 	struct cdev cdev;/*字符设备结构*/
-}
+};
 
 /*全局变量*/
 int scull_major = SCULL_MAJOR;/*主设备号，默认值为0，表示动态分配*/

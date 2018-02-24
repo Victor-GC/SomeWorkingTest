@@ -1,7 +1,7 @@
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/fs.h>
-#include <linux/cdev>
+#include <linux/cdev.h>
 #include <linux/kernel.h>	/*container_of() */
 #include <asm/uaccess.h>	/*copy_to_user(), copy_from_user() */
 #include <linux/errno.h>	/*错误代码 */
@@ -200,6 +200,7 @@ static int scull_init_module(void)
 {
 	int result;
 	dev_t dev = 0;
+	int i;
 
 	/*在装载驱动的时候获得主设备号,此处次设备号是随即设置的么？ */
 	if (scull_major) {	/*如果默认主设备号非零，则按此设备号进行分配 */
@@ -225,7 +226,7 @@ static int scull_init_module(void)
 	}
 	memset(scull_devices, 0, scull_nr_devs * sizeof(struct scull_dev));
 	/*以相应的值初始化scull_devices */
-	for (int i; i < scull_nr_devs; ++i) {
+	for (i = 0; i < scull_nr_devs; ++i) {
 		scull_devices[i].quantum = scull_quantum;
 		scull_devices[i].qset = scull_qset;
 		init_MUTEX(&scull_devices[i].sem);
@@ -243,10 +244,11 @@ int scull_trim(struct scull_dev *dev)
 {
 	struct scull_qset *next, *dptr;
 	int qset = dev->qset;
+	int i;
 
 	for (dptr = dev->data; dptr; dptr = next) {
 		if (dptr->data) {
-			for (int i = 0; i < qset; ++i)
+			for (i = 0; i < qset; ++i)
 				kfree(dptr->data[i]);
 			kfree(dptr->data);
 			dptr->data = NULL;
@@ -264,10 +266,11 @@ int scull_trim(struct scull_dev *dev)
 static int scull_exit_module(void)
 {
 	dev_t devno = MKDEV(scull_major, scull_minor);
+	int i;
 
 	/*释放scull_devices设备内存，并且删除每个设备的cdev */
 	if (scull_devices) {
-		for (int i = 0; i < scull_nr_devices; ++i) {
+		for (i = 0; i < scull_nr_devices; ++i) {
 			scull_trim(scull_devices + i);
 			cdev_del(&scull_devices[i].cdev);
 		}
