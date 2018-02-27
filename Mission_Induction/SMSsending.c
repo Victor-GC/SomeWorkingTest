@@ -103,70 +103,119 @@ int send_core(char* data, int data_num, char* OKword)
 	return 1;
 }
 
-int send_SMS(char* data, int data_num)
+int send_SMS(wchar_t* phone_num, wchar_t* send_data)
 {
+	char* data = "AT+CMGF=1";
+	if(-1 == send_core(data, strlen(data), "OK"))
+	{
+		printf("Set text model failure!\n");
+		return -1;
+	}
 
+	data = "AT+CSMP=17,167,2,25";
+	if(-1 == send_core(data, strlen(data), "OK"))
+	{
+		printf("Set text model parameter failure!\n");
+		return -1;
+	}
+
+	data = "AT+CSCS=\"UCS2\"";
+	if(-1 == send_core(data, strlen(data), "OK"))
+	{
+		printf("Set UCS2 failure!\n");
+		return -1;
+	}
+
+	unsigned int *p = (wchar_t *)phone_num;
+	data = (char*)malloc(4 * wcslen(phone_num));
+	int i;
+	int j;
+	for (i = 0, j = 0; i < wcslen(phone_num); i++)
+	{
+		j += sprintf(data + j, "%.4x", p[i]);
+	}
+	if(-1 == send_core(data, strlen(data), ">"))
+	{
+		printf("Set phone number failure!\n");
+		return -1;
+	}
+	free(data);
+
+	p = (wchar_t *)send_data;
+	data = (char*)malloc(4 * wcslen(send_data);
+	for (i = 0, j = 0; i < wcslen(send_data); i++)
+	{
+		j += sprintf(data + j, "%.4x", p[i]);
+	}
+	
+	if(-1 == send_core(data, strlen(data), "+CMGS: "))
+	{
+		printf("Set phone number failure!\n");
+		return -1;
+	}
+	free(data);
+	
 }
 
 int MMS_init()
 {
-	char* data = "AT+CMMSINIT\n";
+	char* data = "AT+CMMSINIT";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Init MMS model failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSCURL=\"mmsc.monternet.com\"\n";
+	data = "AT+CMMSCURL=\"mmsc.monternet.com\"";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("URL set failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSCID=1\n";
+	data = "AT+CMMSCID=1";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("ID failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSPROTO=\"10.0.0.172\",80\n";
+	data = "AT+CMMSPROTO=\"10.0.0.172\",80";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("IP and port set failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSSENDCFG=6,3,0,0,2,4\n";
+	data = "AT+CMMSSENDCFG=6,3,0,0,2,4";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("PDU parameters set failure!\n");
 		return -1;
 	}
 
-	data = "AT+SAPBR=3,1,\"Contype\",\"GPRS\"\n";
+	data = "AT+SAPBR=3,1,\"Contype\",\"GPRS\"";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Contype and GPRS set failure!\n");
 		return -1;
 	}
 
-	data = "AT+SAPBR=3,1,\"APN\",\"CMWAP\"\n";
+	data = "AT+SAPBR=3,1,\"APN\",\"CMWAP\"";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("APN and CMWAP set failure!\n");
 		return -1;
 	}
 
-	data = "AT+SAPBR=1,1\n";
+	data = "AT+SAPBR=1,1";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Activate failure!\n");
 		return -1;
 	}
 
-	data = "AT+SAPBR=2,1\n";
+	data = "AT+SAPBR=2,1";
 	if(-1 == send_core(data, strlen(data), "+SAPBR:1,1,\"10.3.126.164\""))
 	{
 		printf("State incorrect!\n");
@@ -178,7 +227,7 @@ int MMS_init()
 
 int send_MMS(char* phone_num)
 {
-	char* data = "AT+CMMSEDIT=1\n";
+	char* data = "AT+CMMSEDIT=1";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Enter edit model failure!\n");
@@ -206,21 +255,21 @@ int send_MMS(char* phone_num)
 	char phone_num_data[80];
 	strcpy(phone_num_data,"AT+CMMSRECO=\"");
 	strcat(phone_num_data,phone_num);
-	strcpy(phone_num_data,"\"\n");
+	strcpy(phone_num_data,"\"");
 	if(-1 == send_core(phone_num_data, strlen(phone_num_data), "OK"))
 	{
 		printf("Set phone number failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSSEND\n";
+	data = "AT+CMMSSEND";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Send MMS failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSEDIT=0\n";
+	data = "AT+CMMSEDIT=0";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Exit edit model failure!\n");
@@ -231,14 +280,14 @@ int send_MMS(char* phone_num)
 
 int Close_MMS()
 {
-	char* data = "AT+SAPBR=0,1\n";
+	char* data = "AT+SAPBR=0,1";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Exit SAPBR failure!\n");
 		return -1;
 	}
 
-	data = "AT+CMMSTERM\n";
+	data = "AT+CMMSTERM";
 	if(-1 == send_core(data, strlen(data), "OK"))
 	{
 		printf("Exit MMS model failure!\n");
