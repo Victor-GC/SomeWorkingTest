@@ -150,11 +150,18 @@ int send_SMS(wchar_t* phone_num, wchar_t* send_data)
 	
 	if(-1 == send_core(data, strlen(data), "+CMGS: "))
 	{
-		printf("Set phone number failure!\n");
+		printf("Write send data failure!\n");
 		return -1;
 	}
 	free(data);
-	
+
+	char end_index = 0X1A;
+	if(-1 == send_core(end_index, 1, "OK"))
+	{
+		printf("Send SMS failure!\n");
+		return -1;
+	}
+	return 1;
 }
 
 int MMS_init()
