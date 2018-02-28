@@ -57,16 +57,8 @@ struct raspi_gpio_dev {
 
 /* Declaration of entry points */
 static int raspi_gpio_open(struct inode *inode, struct file *filp);
-static ssize_t raspi_gpio_read ( 
-		struct file *filp,
-		char *buf,
-		size_t count,
-		loff_t *f_pos);
-static ssize_t raspi_gpio_write (
-		struct file *filp,
-		const char *buf,
-		size_t count,
-		loff_t *f_pos);
+static ssize_t raspi_gpio_read (struct file *filp, char *buf, size_t count, loff_t *f_pos);
+static ssize_t raspi_gpio_write (struct file *filp, const char *buf, size_t count, loff_t *f_pos);
 static int raspi_gpio_release(struct inode *inode, struct file *filp);
 
 /* File operation structure */
@@ -102,8 +94,7 @@ unsigned int millis (void)
 	struct timeval timeval ;
 	uint64_t timeNow ;
 	do_gettimeofday(&timeval) ;
-	timeNow = (uint64_t)timeval.tv_sec * (uint64_t)1000 +
-		(uint64_t)(timeval.tv_usec/1000);
+	timeNow = (uint64_t)timeval.tv_sec * (uint64_t)1000 + (uint64_t)(timeval.tv_usec/1000);
 	return (uint32_t)(timeNow - epochMilli) ;
 }
 
@@ -140,37 +131,23 @@ static int raspi_gpio_open (struct inode *inode, struct file *filp) {
 	unsigned long flags;
 	gpio = iminor(inode);
 	printk(KERN_INFO "GPIO[%d] opened\n", gpio);
-	raspi_gpio_devp = container_of(inode->i_cdev,
-			struct raspi_gpio_dev,
-			cdev);
-	if ((raspi_gpio_devp->irq_perm == true) &&
-			(raspi_gpio_devp->dir == in)) {
+	raspi_gpio_devp = container_of(inode->i_cdev, struct raspi_gpio_dev, cdev);
+	if ((raspi_gpio_devp->irq_perm == true) && (raspi_gpio_devp->dir == in)) {
 		if ((raspi_gpio_devp->irq_counter++ == 0)) {
 			irq = gpio_to_irq(gpio);
-			if (raspi_gpio_devp->irq_flag == IRQF_TRIGGER_RISING) {
+			if (raspi_gpio_devp->irq_flag == IRQF_TRIGGER_RISING) {/*如果中断标志是上升沿触发*/
 				spin_lock_irqsave(&raspi_gpio_devp->lock, flags);
-				err = request_irq
-					( irq,
-					  irq_handler,
-					  IRQF_SHARED | IRQF_TRIGGER_RISING,
-					  INTERRUPT_DEVICE_NAME,
-					  raspi_gpio_devp);
+				err = request_irq( irq, irq_handler, IRQF_SHARED | IRQF_TRIGGER_RISING, INTERRUPT_DEVICE_NAME, raspi_gpio_devp);
 				printk(KERN_INFO "interrupt requested\n");
 				spin_unlock_irqrestore(&raspi_gpio_devp->lock, flags);
-			} else {
+			} else {/*如果是下降沿触发*/
 				spin_lock_irqsave(&raspi_gpio_devp->lock, flags);
-				err = request_irq
-					( irq,
-					  irq_handler,
-					  IRQF_SHARED | IRQF_TRIGGER_FALLING,
-					  INTERRUPT_DEVICE_NAME,
-					  raspi_gpio_devp);
+				err = request_irq( irq, irq_handler, IRQF_SHARED | IRQF_TRIGGER_FALLING, INTERRUPT_DEVICE_NAME, raspi_gpio_devp);
 				printk(KERN_INFO "interrupt requested\n");
 				spin_unlock_irqrestore(&raspi_gpio_devp->lock, flags);
 			}
 			if (err != 0) {
-				printk(KERN_ERR "unable to claim irq: %d, error %d\n", irq,
-						err);
+				printk(KERN_ERR "unable to claim irq: %d, error %d\n", irq, err);
 				return err;
 			}
 		}
@@ -191,10 +168,7 @@ static int raspi_gpio_release (struct inode *inode, struct file *filp)
 {
 	unsigned int gpio;
 	struct raspi_gpio_dev *raspi_gpio_devp;
-	raspi_gpio_devp = container_of(
-			inode->i_cdev,
-			struct raspi_gpio_dev,
-			cdev);
+	raspi_gpio_devp = container_of(inode->i_cdev, struct raspi_gpio_dev, cdev);
 	gpio = iminor(inode);
 	printk(KERN_INFO "Closing GPIO %d\n", gpio);
 	spin_lock(&raspi_gpio_devp->lock);
@@ -224,7 +198,7 @@ static int raspi_gpio_release (struct inode *inode, struct file *filp)
  * and output GPIO pins. Since it multiple processes can read the
  * logic state of the GPIO, spin lock is not used here.
  */
-static ssize_t raspi_gpio_read (struct file *filp,	char *buf, size_t count, loff_t *f_pos) {
+static ssize_t raspi_gpio_read (struct file *filp, char *buf, size_t count, loff_t *f_pos) {
 	unsigned int gpio;
 	ssize_t retval;
 	char byte;
@@ -342,25 +316,18 @@ static ssize_t raspi_gpio_write (struct file *filp, const char *buf, size_t coun
 static int __init raspi_gpio_init(void) {
 	int i, ret, index = 0;
 	struct timeval tv ;
-	if (alloc_chrdev_region(&first,
-				0,
-				NUM_GPIO_PINS,
-				DEVICE_NAME) < 0) {
+	if (alloc_chrdev_region(&first, 0, NUM_GPIO_PINS, DEVICE_NAME) < 0) {
 		printk(KERN_DEBUG "Cannot register device\n");
 		return -1;
 	}
-	if ((raspi_gpio_class = class_create( THIS_MODULE,
-					DEVICE_NAME)) == NULL) {
+	if ((raspi_gpio_class = class_create( THIS_MODULE, DEVICE_NAME)) == NULL) {
 		printk(KERN_DEBUG "Cannot create class %s\n", DEVICE_NAME);
 		unregister_chrdev_region(first, NUM_GPIO_PINS);
 		return -EINVAL;
 	}
 	for (i = 0; i < MAX_GPIO_NUMBER; i++) {
-		if ( i != 0 && i != 1 && i != 5 && i != 6 &&
-				i != 12 && i != 13 && i != 16 && i != 19 &&
-				i != 20 && i != 21 && i != 26) {
-			raspi_gpio_devp[index] = kmalloc(sizeof(struct raspi_gpio_dev),
-					GFP_KERNEL);
+		if ( i != 0 && i != 1 && i != 5 && i != 6 && i != 12 && i != 13 && i != 16 && i != 19 && i != 20 && i != 21 && i != 26) {
+			raspi_gpio_devp[index] = kmalloc(sizeof(struct raspi_gpio_dev), GFP_KERNEL);
 			if (!raspi_gpio_devp[index]) {
 				printk("Bad kmalloc\n");
 				return -ENOMEM;
@@ -377,29 +344,18 @@ static int __init raspi_gpio_init(void) {
 			raspi_gpio_devp[index]->cdev.owner = THIS_MODULE;
 			spin_lock_init(&raspi_gpio_devp[index]->lock);
 			cdev_init(&raspi_gpio_devp[index]->cdev, &raspi_gpio_fops);
-			if ((ret = cdev_add( &raspi_gpio_devp[index]->cdev,
-							(first + i),
-							1))) {
+			if ((ret = cdev_add( &raspi_gpio_devp[index]->cdev, (first + i), 1))) {
 				printk (KERN_ALERT "Error %d adding cdev\n", ret);
 				for (i = 0; i < MAX_GPIO_NUMBER; i++) {
-					if ( i != 0 && i != 1 && i != 5 && i != 6 &&
-							i != 12 && i != 13 && i != 16 && i != 19 &&
-							i != 20 && i != 21 && i != 26) {
-						device_destroy (raspi_gpio_class,
-								MKDEV(MAJOR(first),
-									MINOR(first) + i));
+					if ( i != 0 && i != 1 && i != 5 && i != 6 && i != 12 && i != 13 && i != 16 && i != 19 && i != 20 && i != 21 && i != 26) {
+						device_destroy (raspi_gpio_class, MKDEV(MAJOR(first), MINOR(first) + i));
 					}
 				}
 				class_destroy(raspi_gpio_class);
 				unregister_chrdev_region(first, NUM_GPIO_PINS);
 				return ret;
 			}
-			if (device_create( raspi_gpio_class,
-						NULL,
-						MKDEV(MAJOR(first), MINOR(first)+i),
-						NULL,
-						"raspiGpio%d",
-						i) == NULL) {
+			if (device_create( raspi_gpio_class, NULL, MKDEV(MAJOR(first), MINOR(first)+i), NULL, "raspiGpio%d", i) == NULL) {
 				class_destroy(raspi_gpio_class);
 				unregister_chrdev_region(first, NUM_GPIO_PINS);
 				return -1;
@@ -409,8 +365,7 @@ static int __init raspi_gpio_init(void) {
 	}
 	// Configure interrupt
 	do_gettimeofday(&tv) ;
-	epochMilli = (uint64_t)tv.tv_sec *(uint64_t)1000 +
-		(uint64_t)(tv.tv_usec/1000);
+	epochMilli = (uint64_t)tv.tv_sec *(uint64_t)1000 + (uint64_t)(tv.tv_usec/1000);
 	printk("RaspberryPi GPIO driver initialized\n");
 	return 0;
 }
@@ -431,12 +386,9 @@ static void __exit raspi_gpio_exit(void) {
 	for (i = 0; i < NUM_GPIO_PINS; i++)
 		kfree(raspi_gpio_devp[i]);
 	for (i = 0; i < MAX_GPIO_NUMBER; i++) {
-		if ( i != 0 && i != 1 && i != 5 && i != 6 &&
-				i != 12 && i != 13 && i != 16 && i != 19 &&
-				i != 20 && i != 21 && i != 26) {
+		if ( i != 0 && i != 1 && i != 5 && i != 6 && i != 12 && i != 13 && i != 16 && i != 19 && i != 20 && i != 21 && i != 26) {
 			gpio_direction_output(i, 0);
-			device_destroy ( raspi_gpio_class,
-					MKDEV(MAJOR(first), MINOR(first) + i));
+			device_destroy ( raspi_gpio_class, MKDEV(MAJOR(first), MINOR(first) + i));
 			gpio_free(i);
 		}
 	}
